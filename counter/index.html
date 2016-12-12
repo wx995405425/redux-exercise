@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Redux 计数器练习</title>
+    <script src="https://unpkg.com/redux@latest/dist/redux.js"></script>
+    <style>p{line-height: 1.5em;} .box{width: 60%; padding: 0px 20px;}</style>
+</head>
+<body>
+	<div class="box">
+		<h1>Redux 的三大基本概念</h1>
+		<p><b>State</b><br />描述应用的状态.</p>
+		<p><b>Action</b><br />
+		Action 是把数据从应用（译者注：这里之所以不叫 view 是因为这些数据有可能是服务器响应，用户输入或其它非 view 的数据 ）传到 store 的有效载荷。它是 store 数据的唯一来源。一般来说你会通过 store.dispatch() 将 action 传到 store</p>
+		<p><b>Reducer(减速器)</b><br />
+		把 action 和 state 串起，指明应用如何更新 state。即根据不同的action设置state。reducer 只是一个接收 state 和 action，并返回新的 state 的函数。 对于大的应用来说，可能很难开发这样的函数，所以我们编写很多小函数来分别管理state 的一部分，再开发一个reducer调用这些小reducer，进而来管理整个应用的 state </p><br />
+		<h1>Redux 的三大原则</h1>
+		<p><b>单一数据源</b><br />
+		整个应用的 state 被储存在一棵 object tree 中，并且这个 object tree 只存在于唯一一个 store 中。调用Redux.createStore()方法生成store，该方法接收一个参数Reducer</p>
+		<p><b>State 是只读的</b><br />	惟一改变state的方法就是触发action，action 是一个用于描述已发生事件的普通对象。调用store.dispatch()方法派发事件，该方法接收一个描述事件的对象作为参数，如：{ type: 'xxxxxxxxxxx', value}，其中type是必须的，且必须与Reducer中的actio保持一一对应</p>
+		<p><b>使用纯函数来执行修改</b><br />
+		为了描述 action 如何改变 state tree ，你需要编写 reducers。Reducer 只是一些纯函数，它接收先前的 state 和 action，并返回新的 state。刚开始你可以只有一个 reducer，随着应用变大，你可以把它拆成多个小的 reducers，分别独立地操作 state tree 的不同部分，因为 reducer 只是函数，你可以控制它们被调用的顺序，传入附加数据，甚至编写可复用的 reducer 来处理一些通用任务，如分页器。
+		<pre>
+function visibilityFilter(state = 'SHOW_ALL', action) {
+  switch (action.type) {
+    case 'SET_VISIBILITY_FILTER':
+      return action.filter
+    default:
+      return state
+  }
+}
+
+function todos(state = [], action) {//设置默认参数
+  switch (action.type) {
+    case 'ADD_TODO':
+      return [
+        ...state,
+        {
+          text: action.text,
+          completed: false
+        }
+      ]
+    case 'COMPLETE_TODO':
+      return state.map((todo, index) => {
+        if (index === action.index) {
+          return Object.assign({}, todo, {
+            completed: true
+          })
+        }
+        return todo
+      })
+    default:
+      return state
+  }
+}
+
+import { combineReducers, createStore } from 'redux'
+let reducer = combineReducers({ visibilityFilter, todos })//组装子reduce
+let store = createStore(reducer)
+		</pre>
+		</p><br />
+	</div>
+	<p>
+		数值：<span id="value"></span>
+		<button id="increment">+</button>
+		<button id="decrement">-</button>
+		<button id="odd">奇数加1</button>
+		<button id="async">异步</button>
+	</p>
+	<script>
+		var el = document.getElementById('value');
+		var inBtn = document.getElementById('increment');
+		var deBtn = document.getElementById('decrement');
+		var oddBtn = document.getElementById('odd');
+		var asyncBtn = document.getElementById('async');
+		function counter(state, action){//定义一个名为counter的reducer
+			if(typeof state === 'undefined'){//设置默认state
+				return 0;
+			}
+
+			switch(action.type){
+				case 'ACTION_Increment':
+					return state + 1;
+				case 'ACTION_Decrement':
+					return state - 1;
+				default:
+					return state;
+			}
+			return state;
+		}
+		var store = Redux.createStore(counter);//生成store
+		function render(){//页面渲染
+			el.innerHTML = store.getState().toString();
+		}
+		render();//初次渲染
+		store.subscribe(render);//订阅store的更新状态，并将render方法作为更新状态的回调函数
+
+
+		inBtn.addEventListener('click', function(e){
+			store.dispatch({type: 'ACTION_Increment'});//派发action
+		}, false);
+		deBtn.addEventListener('click', function(e){
+			store.dispatch({type: 'ACTION_Decrement'});//派发action
+		}, false);
+		oddBtn.addEventListener('click', function(e){
+			if(store.getState()%2 !== 0){
+				store.dispatch({type: 'ACTION_Increment'});//派发action
+			}
+		}, false);
+		asyncBtn.addEventListener('click', function(e){
+			setTimeout(function(){
+				store.dispatch({type: 'ACTION_Decrement'});//派发action
+			}, 2000);
+		}, false);
+	</script>
+</body>
+</html>
